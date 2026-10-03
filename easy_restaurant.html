@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Restaurant Full System</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts (Noto Sans Lao & Noto Sans SC for Chinese) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans Lao', 'Noto Sans SC', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#047857', // Emerald 700 - Main Brand Color
+                        'primary-hover': '#065f46', // Emerald 800
+                        secondary: '#e6f4ea', // Light green background
+                        background: '#f9fafb', // Gray 50
+                        surface: '#ffffff', // White
+                        'text-main': '#1f2937', // Gray 800
+                        'text-muted': '#6b7280', // Gray 500
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        success: '#10b981'
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans Lao', 'Noto Sans SC', sans-serif;
+            background-color: #f9fafb;
+            color: #1f2937;
+            overflow: hidden;
+        }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: #4b5563;
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+            margin-bottom: 0.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin-right: 1rem;
+        }
+        
+        .sidebar-link:hover {
+            background-color: #f3f4f6;
+            color: #111827;
+        }
+        
+        .sidebar-link.active {
+            background-color: #e6f4ea;
+            color: #047857;
+            border-left-color: #047857;
+            font-weight: 600;
+        }
+        
+        .sidebar-link .icon-container {
+            width: 24px;
+            display: flex;
+            justify-content: center;
+            margin-right: 0.75rem;
+        }
+
+        .view-section {
+            display: none;
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards;
+        }
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #047857;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            transform: translateY(150%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .toast.show {
+            transform: translateY(0);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .status-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .status-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        
+        .menu-filter-btn.active {
+            background-color: #047857;
+            color: white;
+            border-color: #047857;
+        }
+    </style>
+</head>
+
+<body class="flex h-screen w-full">
+
+    <!-- ================= LOGIN OVERLAY ================= -->
+    <div id="login-overlay" class="fixed inset-0 z-50 flex bg-surface">
+        <!-- Left Banner Side -->
+        <div class="hidden lg:flex lg:w-1/2 bg-secondary items-center justify-center p-12 relative overflow-hidden border-r border-green-100">
+            <div class="max-w-md z-10">
+                <div class="flex items-center space-x-3 mb-8">
+                    <div class="bg-primary text-white p-3 rounded-xl flex items-center justify-center h-12 w-12 shadow-md">
+                        <i class="fa-solid fa-utensils text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-text-main leading-tight">Easy Restaurant</h1>
+                        <p class="text-xs text-text-muted uppercase tracking-wider">Management System</p>
+                    </div>
+                </div>
+                <h2 class="text-4xl font-extrabold text-primary mb-4 leading-tight" data-i18n="login_banner_title">ເລີ່ມຕົ້ນມື້ໃໝ່ ທີ່ດີໄປດ້ວຍກັນ.</h2>
+                <p class="text-gray-600 mb-8 text-base leading-relaxed" data-i18n="login_banner_desc">ຈັດການຮ້ານອາຫານຂອງທ່ານ ໃຫ້ທຸກຢ່າງເປັນເລື່ອງງ່າຍ.</p>
+                <div class="relative rounded-2xl overflow-hidden shadow-2xl bg-white/50 p-4 border border-green-200">
+                    <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&h=400&fit=crop" alt="Restaurant Interior" class="rounded-xl w-full h-64 object-cover">
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Form Side -->
+        <div class="w-full lg:w-1/2 flex flex-col justify-between p-8 sm:p-12 lg:p-16 relative">
+            <!-- Top Lang Switcher -->
+            <div class="flex justify-end items-center space-x-3">
+                <button onclick="LangManager.changeLang('en')" class="text-sm font-semibold hover:text-primary transition-colors">English</button>
+                <span class="text-gray-300">/</span>
+                <button onclick="LangManager.changeLang('lo')" class="text-sm font-semibold text-primary">ພາສາລາວ</button>
+                <span class="text-gray-300">/</span>
+                <button onclick="LangManager.changeLang('zh')" class="text-sm font-semibold hover:text-primary transition-colors">中文</button>
+            </div>
+
+            <!-- Login Box -->
+            <div class="max-w-md w-full mx-auto my-auto py-8">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-extrabold text-text-main mb-2" data-i18n="login_welcome">ຍິນດີຕ້ອນຮັບ</h2>
+                    <p class="text-sm text-text-muted" data-i18n="login_subtitle">ເຂົ້າສູ່ລະບົບ ເພື່ອຈັດການຮ້ານອາຫານຂອງທ່ານ.</p>
+                </div>
+
+                <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-text-main mb-2" data-i18n="login_username_label">ຊື່ຜູ້ໃຊ້ ຫຼື ອີເມວ</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-user absolute left-4 top-3.5 text-gray-400"></i>
+                            <input type="text" id="login-user" required placeholder="admin" value="admin" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-all">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-text-main mb-2" data-i18n="login_password_label">ລະຫັດຜ່ານ</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-4 top-3.5 text-gray-400"></i>
+                            <input type="password" id="login-pass" required placeholder="admin123" value="admin123" class="w-full pl-11 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-all">
+                            <button type="button" onclick="togglePassword()" class="absolute right-4 top-3.5 text-gray-400 hover:text-text-main">
+                                <i class="fa-solid fa-eye" id="toggle-pass-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="login-error" class="hidden text-danger text-sm font-medium bg-red-50 p-3 rounded-lg border border-red-100 flex items-center">
+                        <i class="fa-solid fa-circle-exclamation mr-2"></i> <span data-i18n="login_error">ຊື່ຜູ້ໃຊ້ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ (admin / admin123)</span>
+                    </div>
+
+                    <button type="submit" class="w-full bg-primary hover:bg-primary-hover text-white py-3.5 rounded-xl font-bold transition-all shadow-md hover:shadow-lg flex justify-center items-center">
+                        <span data-i18n="login_btn">ເຂົ້າສູ່ລະບົບ</span> <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </form>
+                
+                <div class="mt-6 text-center bg-secondary/50 p-4 rounded-xl border border-green-100">
+                    <p class="text-xs text-text-muted font-medium">💡 ສາມາດທົດລອງເຂົ້າສູ່ລະບົບດ້ວຍ:</p>
+                    <p class="text-xs font-bold text-primary mt-1">User: <code class="bg-white px-2 py-0.5 rounded border">admin</code> | Pwd: <code class="bg-white px-2 py-0.5 rounded border">admin123</code></p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center text-xs text-text-muted">
+                <p>&copy; 2026 Easy Restaurant. ຮ່ວມພັດທະນາໂດຍ : <span class="font-bold text-primary">KKCOMPUTECH</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MAIN APP LAYOUT (HIDDEN UNTIL LOGIN) ================= -->
+    <!-- SIDEBAR NAVIGATION -->
+    <aside id="main-sidebar" class="w-[260px] bg-surface border-r border-gray-200 flex flex-col h-full flex-shrink-0 z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)] hidden">
+        
+        <!-- Logo Area -->
+        <div class="h-20 flex items-center px-6 border-b border-gray-100">
+            <div class="bg-primary text-white p-2 rounded-lg flex items-center justify-center h-10 w-10 shadow-sm flex-shrink-0">
+                <i class="fa-solid fa-utensils text-lg"></i>
+            </div>
+            <div class="ml-3 overflow-hidden">
+                <h1 class="text-xl font-bold text-text-main leading-tight tracking-tight truncate brand-name">Easy Restaurant</h1>
+                <p class="text-[11px] text-text-muted uppercase tracking-wider font-medium">Management</p>
+            </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="flex-1 overflow-y-auto py-4 scrollbar-hide">
+            <a href="#overview" class="sidebar-link active" data-view="overview">
+                <div class="icon-container"><i class="fa-solid fa-house"></i></div>
+                <span data-i18n="nav_overview">ພາບລວມ</span>
+            </a>
+            <a href="#pos" class="sidebar-link" data-view="pos">
+                <div class="icon-container"><i class="fa-solid fa-cart-shopping"></i></div>
+                <span data-i18n="nav_pos">ຂາຍອາຫານ (POS)</span>
+            </a>
+            <a href="#orders" class="sidebar-link" data-view="orders">
+                <div class="icon-container"><i class="fa-solid fa-receipt"></i></div>
+                <span data-i18n="nav_orders">ອໍເດີ</span>
+            </a>
+            <a href="#kitchen" class="sidebar-link" data-view="kitchen">
+                <div class="icon-container"><i class="fa-solid fa-fire-burner"></i></div>
+                <span data-i18n="nav_kitchen">ຫ້ອງຄົວ</span>
+            </a>
+            <a href="#tables" class="sidebar-link" data-view="tables">
+                <div class="icon-container"><i class="fa-solid fa-chair"></i></div>
+                <span data-i18n="nav_tables">ໂຕະອາຫານ</span>
+            </a>
+            <a href="#bookings" class="sidebar-link" data-view="bookings">
+                <div class="icon-container"><i class="fa-regular fa-calendar-check"></i></div>
+                <span data-i18n="nav_bookings">ຈອງໂຕະ</span>
+            </a>
+            <a href="#menu-mgmt" class="sidebar-link" data-view="menu-mgmt">
+                <div class="icon-container"><i class="fa-solid fa-book-open"></i></div>
+                <span data-i18n="nav_menu">ເມນູອາຫານ</span>
+            </a>
+            <a href="#inventory" class="sidebar-link" data-view="inventory">
+                <div class="icon-container"><i class="fa-solid fa-boxes-stacked"></i></div>
+                <span data-i18n="nav_inventory">ສາງວັດຖຸດິບ</span>
+            </a>
+            <a href="#suppliers" class="sidebar-link" data-view="suppliers">
+                <div class="icon-container"><i class="fa-solid fa-truck-field"></i></div>
+                <span data-i18n="nav_suppliers">ຜູ້ສະໜອງ</span>
+            </a>
+            <a href="#purchasing" class="sidebar-link" data-view="purchasing">
+                <div class="icon-container"><i class="fa-solid fa-cart-arrow-down"></i></div>
+                <span data-i18n="nav_purchasing">ຈັດຊື້</span>
+            </a>
+            <a href="#parking" class="sidebar-link" data-view="parking">
+                <div class="icon-container"><i class="fa-solid fa-square-parking"></i></div>
+                <span data-i18n="nav_parking">ຝາກລົດ</span>
+            </a>
+            
+            <div class="my-4 border-t border-gray-100 mx-4"></div>
+            
+            <a href="#reports" class="sidebar-link" data-view="reports">
+                <div class="icon-container"><i class="fa-solid fa-chart-simple"></i></div>
+                <span data-i18n="nav_reports">ລາຍງານ</span>
+            </a>
+            <a href="#staff" class="sidebar-link" data-view="staff">
+                <div class="icon-container"><i class="fa-solid fa-user-tie"></i></div>
+                <span data-i18n="nav_staff">ພະນັກງານ</span>
+            </a>
+            <a href="#branches" class="sidebar-link" data-view="branches">
+                <div class="icon-container"><i class="fa-solid fa-store"></i></div>
+                <span data-i18n="nav_branches">ສາຂາ ແລະອາຍຸບັນຊີ</span>
+            </a>
+            <a href="#settings" class="sidebar-link" data-view="settings">
+                <div class="icon-container"><i class="fa-solid fa-gear"></i></div>
+                <span data-i18n="nav_settings">ຕັ້ງຄ່າ</span>
+            </a>
+        </nav>
+
+        <!-- User Profile Footer -->
+        <div class="p-4 border-t border-gray-200">
+            <div class="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors" onclick="handleLogout()">
+                <div class="h-10 w-10 rounded-full bg-secondary text-primary font-bold flex items-center justify-center border border-green-200">
+                    A
+                </div>
+                <div class="ml-3 overflow-hidden flex-1">
+                    <p class="text-sm font-semibold text-text-main truncate">admin</p>
+                    <p class="text-xs text-text-muted truncate" data-i18n="user_role">ຜູ້ເບິ່ງແຍງ</p>
+                </div>
+                <i class="fa-solid fa-right-from-bracket text-gray-400 hover:text-danger" title="ອອກຈາກລະບົບ"></i>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main id="main-content-area" class="flex-1 flex flex-col h-full bg-background relative overflow-hidden hidden">
+        
+        <!-- Top Action Bar -->
+        <header class="h-16 bg-surface border-b border-gray-200 flex items-center justify-between px-6 z-10">
+            <div class="flex-1 flex items-center">
+                <h2 class="text-xl font-bold text-text-main" id="page-title">ພາບລວມ (Overview)</h2>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="flex flex-col text-right hidden md:block">
+                    <span class="text-[10px] text-gray-400 uppercase" data-i18n="current_branch">ສາຂາປັດຈຸບັນ</span>
+                    <select class="text-sm font-medium text-text-main bg-transparent border-none outline-none cursor-pointer p-0 focus:ring-0">
+                        <option data-i18n="main_branch">ສາຂາຫຼັກ (Main Branch)</option>
+                        <option>ສາຂາ 2 (Branch 2)</option>
+                    </select>
+                </div>
+                <div class="h-8 w-px bg-gray-200 mx-2"></div>
+                <!-- Language Selector -->
+                <div class="text-sm font-medium text-gray-400 flex items-center space-x-1 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
+                    <i class="fa-solid fa-globe text-primary mr-1"></i>
+                    <select id="lang-selector" onchange="LangManager.changeLang(this.value)" class="bg-transparent text-text-main font-semibold outline-none cursor-pointer">
+                        <option value="lo">ລາວ (Lao)</option>
+                        <option value="en">English</option>
+                        <option value="zh">中文 (Chinese)</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Viewport -->
+        <div class="flex-1 overflow-y-auto relative scroll-smooth p-6 pb-20" id="app-viewport">
+            
+            <!-- ================= VIEW: OVERVIEW ================= -->
+            <div id="view-overview" class="view-section active space-y-6 max-w-7xl mx-auto">
+                <div class="bg-secondary rounded-2xl p-8 relative overflow-hidden flex items-center min-h-[220px] shadow-sm border border-green-100">
+                    <div class="z-10 w-full md:w-3/5">
+                        <h2 class="text-4xl font-extrabold text-primary mb-3 font-sans tracking-tight" data-i18n="banner_title">ເລີ່ມມື້ດີໆ ຢູ່ທີ່ນີ້.</h2>
+                        <p class="text-gray-700 mb-8 text-lg" data-i18n="banner_desc">ບໍລິຫານຮ້ານອາຫານໃຫ້ລຽບລື່ນ ທຸກໆມື້.</p>
+                        <a href="#pos" class="inline-flex items-center justify-center bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                            <i class="fa-solid fa-plus mr-2"></i> <span data-i18n="btn_new_order">ສ້າງອໍເດີໃໝ່</span>
+                        </a>
+                    </div>
+                    <div class="absolute right-0 top-0 h-full w-2/5 hidden md:flex justify-end items-center pointer-events-none">
+                        <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&h=400&fit=crop" alt="Food Banner" class="h-[150%] object-cover transform translate-x-12 -translate-y-4 rounded-full mix-blend-multiply opacity-90 shadow-2xl">
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-end pt-4 pb-2">
+                    <h3 class="text-xl font-bold text-text-main flex items-center">
+                        <i class="fa-solid fa-chart-pie text-primary mr-2"></i> <span data-i18n="today_overview">ພາບລວມມື້ນີ້</span>
+                    </h3>
+                    <span class="text-sm font-medium text-text-muted bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm" id="current-date-display">10/3/2026</span>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-surface p-5 rounded-xl border border-gray-100 shadow-soft">
+                        <p class="text-sm text-text-muted mb-2 font-medium" data-i18n="kpi_revenue">ເງິນຮັບສຸດທິມື້ນີ້</p>
+                        <p class="text-3xl font-bold text-text-main" id="kpi-revenue">225,000 ₭</p>
+                    </div>
+                    <div class="bg-surface p-5 rounded-xl border border-gray-100 shadow-soft">
+                        <p class="text-sm text-text-muted mb-2 font-medium" data-i18n="kpi_orders">ອໍເດີທັງໝົດ</p>
+                        <p class="text-3xl font-bold text-text-main" id="kpi-orders-count">3</p>
+                    </div>
+                    <div class="bg-surface p-5 rounded-xl border border-gray-100 shadow-soft">
+                        <p class="text-sm text-text-muted mb-2 font-medium" data-i18n="kpi_tables">ໂຕະທີ່ໃຊ້ງານ</p>
+                        <p class="text-3xl font-bold text-text-main"><span class="text-primary">2</span> / 12</p>
+                    </div>
+                    <div class="bg-surface p-5 rounded-xl border border-gray-100 shadow-soft">
+                        <p class="text-sm text-text-muted mb-2 font-medium" data-i18n="kpi_bookings">ການຈອງ</p>
+                        <p class="text-3xl font-bold text-text-main">0</p>
+                    </div>
+                </div>
+
+                <!-- Bottom Dashboard Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-surface rounded-xl border border-gray-100 shadow-soft flex flex-col">
+                        <div class="p-5 border-b border-gray-50 flex justify-between items-center">
+                            <h4 class="font-bold text-text-main" data-i18n="recent_orders">ອໍເດີຫຼ້າສຸດ</h4>
+                            <a href="#orders" class="text-sm text-primary hover:underline font-medium" data-i18n="view_all">ເບິ່ງທັງໝົດ</a>
+                        </div>
+                        <div class="overflow-x-auto flex-1">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50/50 text-xs text-text-muted border-b border-gray-100">
+                                        <th class="p-4 font-semibold" data-i18n="th_order">ອໍເດີ</th>
+                                        <th class="p-4 font-semibold text-center" data-i18n="th_table">ໂຕະ</th>
+                                        <th class="p-4 font-semibold text-center" data-i18n="th_status">ສະຖານະ</th>
+                                        <th class="p-4 font-semibold text-right" data-i18n="th_total">ລວມ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                        <td class="p-4"><p class="font-semibold text-text-main">EASY-260930-AWC028</p><p class="text-xs text-text-muted mt-0.5">19:48</p></td>
+                                        <td class="p-4 text-center font-medium">T03</td>
+                                        <td class="p-4 text-center"><span class="status-badge status-success" data-i18n="status_success">ສຳເລັດ</span></td>
+                                        <td class="p-4 text-right"><p class="font-bold text-text-main">225,000 ₭</p></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-surface rounded-xl border border-gray-100 shadow-soft p-5 flex flex-col">
+                        <div class="flex justify-between items-center mb-4 border-b border-gray-50 pb-3">
+                            <h4 class="font-bold text-text-main" data-i18n="nav_tables">ໂຕະອາຫານ</h4>
+                            <a href="#tables" class="text-sm text-primary hover:underline font-medium" data-i18n="view_all">ເບິ່ງທັງໝົດ</a>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 flex-1">
+                            <div class="bg-red-50 rounded-lg p-3 flex flex-col items-center justify-center border border-red-200 shadow-sm cursor-pointer hover:bg-red-100 transition-colors">
+                                <i class="fa-solid fa-chair text-danger text-2xl mb-1"></i>
+                                <span class="text-sm font-bold text-text-main mt-1">T01</span>
+                                <span class="text-[10px] text-danger font-semibold">ມີລູກຄ້າ</span>
+                            </div>
+                            <div class="bg-secondary rounded-lg p-3 flex flex-col items-center justify-center border border-green-100 shadow-sm cursor-pointer hover:bg-green-100 transition-colors">
+                                <i class="fa-solid fa-chair text-primary text-2xl mb-1"></i>
+                                <span class="text-sm font-bold text-text-main mt-1">T02</span>
+                                <span class="text-[10px] text-primary font-semibold">ຫວ່າງ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW: POS ================= -->
+            <div id="view-pos" class="view-section h-[calc(100vh-120px)]">
+                <div class="flex flex-col lg:flex-row gap-6 h-full">
+                    <div class="flex-1 flex flex-col h-full bg-surface rounded-xl border border-gray-100 shadow-soft overflow-hidden">
+                        <div class="p-4 border-b border-gray-100 bg-white z-10 space-y-3">
+                            <div class="relative">
+                                <i class="fa-solid fa-search absolute left-4 top-3.5 text-gray-400"></i>
+                                <input type="text" id="pos-search-input" oninput="CartManager.filterMenu()" placeholder="ຄົ້ນຫາເມນູ... (Search menu)" data-i18n-placeholder="search_menu" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm">
+                            </div>
+                            <!-- Category Filter Tabs -->
+                            <div class="flex gap-2 overflow-x-auto pb-1" id="pos-category-tabs">
+                                <button onclick="CartManager.setCategory('all')" class="menu-filter-btn active px-4 py-2 rounded-lg text-xs font-bold border border-gray-200 whitespace-nowrap transition-colors">ທັງໝົດ</button>
+                                <button onclick="CartManager.setCategory('ອາຫານລາວ')" class="menu-filter-btn px-4 py-2 rounded-lg text-xs font-bold border border-gray-200 whitespace-nowrap transition-colors">ອາຫານລາວ</button>
+                                <button onclick="CartManager.setCategory('ປີ້ງ ແລະ ຍ້າງ')" class="menu-filter-btn px-4 py-2 rounded-lg text-xs font-bold border border-gray-200 whitespace-nowrap transition-colors">ປີ້ງ ແລະ ຍ້າງ</button>
+                                <button onclick="CartManager.setCategory('ເຂົ້າ ແລະ ເສັ້ນ')" class="menu-filter-btn px-4 py-2 rounded-lg text-xs font-bold border border-gray-200 whitespace-nowrap transition-colors">ເຂົ້າ ແລະ ເສັ້ນ</button>
+                                <button onclick="CartManager.setCategory('ຜັກ ແລະ ສະຫຼັດ')" class="menu-filter-btn px-4 py-2 rounded-lg text-xs font-bold border border-gray-200 whitespace-nowrap transition-colors">ຜັກ ແລະ ສະຫຼັດ</button>
+                                <button onclick="CartManager.setCategory('ຂອງຫວານ')" class="menu-filter-btn px-4 py-2 rounded-lg text-xs font-bold border border-gray-200 whitespace-nowrap transition-colors">ຂອງຫວານ</button>
+                                <button onclick="CartManager.setCategory('ເຄື່ອງດື່ມ')" class="menu-filter-btn px-4 py-2 rounded-lg text-xs font-bold border border-gray-200 whitespace-nowrap transition-colors">ເຄື່ອງດື່ມ</button>
+                            </div>
+                        </div>
+                        <div class="flex-1 overflow-y-auto p-4 bg-gray-50">
+                            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4" id="menu-grid-container"></div>
+                        </div>
+                    </div>
+                    <div class="w-full lg:w-[380px] bg-surface rounded-xl border border-gray-200 shadow-soft flex flex-col h-full flex-shrink-0 relative">
+                        <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white rounded-t-xl">
+                            <h3 class="font-bold text-lg text-text-main" data-i18n="current_order">ອໍເດີປັດຈຸບັນ</h3>
+                            <span class="bg-secondary text-primary text-xs px-2.5 py-1 rounded-md font-semibold border border-green-200"><span id="cart-count">0</span> <span data-i18n="items">ລາຍການ</span></span>
+                        </div>
+                        <!-- Order Options -->
+                        <div class="p-4 bg-gray-50 border-b border-gray-100 grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <label class="block text-gray-500 mb-1 font-medium">ຮູບແບບການບໍລິການ</label>
+                                <select id="order-type" class="w-full p-2 bg-white border border-gray-200 rounded-lg font-medium">
+                                    <option>ທານໃນຮ້ານ</option>
+                                    <option>ຫໍ່ກັບບ້ານ</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-500 mb-1 font-medium">ເລືອກໂຕະ</label>
+                                <select id="order-table" class="w-full p-2 bg-white border border-gray-200 rounded-lg font-medium">
+                                    <option value="T01">T01 (Main hall)</option>
+                                    <option value="T02">T02 (Main hall)</option>
+                                    <option value="T03">T03 (Main hall)</option>
+                                    <option value="T04">T04 (Main hall)</option>
+                                    <option value="T05">T05 (Main hall)</option>
+                                    <option value="T06">T06 (Main hall)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex-1 overflow-y-auto p-4 flex flex-col bg-white" id="cart-items-container">
+                            <div id="cart-empty-state" class="m-auto text-center py-10 flex flex-col items-center justify-center">
+                                <div class="h-16 w-16 bg-gray-50 rounded-full flex items-center justify-center mb-3">
+                                    <i class="fa-solid fa-utensils text-2xl text-gray-300"></i>
+                                </div>
+                                <h4 class="text-text-main font-semibold mb-1" data-i18n="no_items">ຍັງບໍ່ມີລາຍການ</h4>
+                            </div>
+                            <ul id="cart-list" class="w-full hidden space-y-2"></ul>
+                        </div>
+                        <div class="p-4 border-t border-gray-100 bg-white rounded-b-xl">
+                            <div class="flex justify-between items-end mb-4 border-t border-dashed border-gray-200 pt-3">
+                                <span class="font-bold text-text-main text-lg" data-i18n="th_total">ລວມທັງໝົດ</span>
+                                <span class="text-primary font-bold text-2xl"><span id="cart-total">0</span> ₭</span>
+                            </div>
+                            <button class="w-full bg-primary hover:bg-primary-hover text-white py-3.5 rounded-xl font-bold transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center" id="btn-submit-order" disabled onclick="submitOrder()">
+                                <i class="fa-solid fa-paper-plane mr-2"></i> <span data-i18n="save_order">ບັນທຶກອໍເດີ</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW: ORDERS ================= -->
+            <div id="view-orders" class="view-section h-[calc(100vh-100px)] flex flex-col">
+                <div class="bg-surface rounded-xl border border-gray-200 shadow-soft p-5 flex-1 flex flex-col overflow-hidden">
+                    <div class="flex-1 overflow-auto rounded-lg border border-gray-100">
+                        <table class="w-full text-left border-collapse min-w-[800px]">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
+                                <tr class="text-xs text-text-muted border-b border-gray-200">
+                                    <th class="p-4 font-semibold uppercase tracking-wider" data-i18n="th_order">ອໍເດີ</th>
+                                    <th class="p-4 font-semibold text-center uppercase tracking-wider" data-i18n="th_table">ໂຕະ</th>
+                                    <th class="p-4 font-semibold text-center uppercase tracking-wider" data-i18n="th_status">ສະຖານະ</th>
+                                    <th class="p-4 font-semibold text-right uppercase tracking-wider" data-i18n="th_total">ລວມ</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm" id="orders-table-body">
+                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                    <td class="p-4"><p class="font-bold text-primary">EASY-260930-AWC028</p><p class="text-xs text-text-muted mt-1">19:46</p></td>
+                                    <td class="p-4 text-center font-medium">T03</td>
+                                    <td class="p-4 text-center"><span class="status-badge status-success" data-i18n="status_success">ສຳເລັດ</span></td>
+                                    <td class="p-4 text-right"><p class="font-bold text-text-main">225,000 ₭</p></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW: KITCHEN ================= -->
+            <div id="view-kitchen" class="view-section">
+                <div class="bg-white p-10 rounded-xl border border-gray-200 text-center shadow-soft">
+                    <i class="fa-solid fa-fire-burner text-4xl text-gray-300 mb-4"></i>
+                    <h2 class="text-xl font-bold mb-2" data-i18n="nav_kitchen">ຫ້ອງຄົວ</h2>
+                    <p class="text-sm text-gray-400">ຍັງບໍ່ມີອໍເດີອາຫານທີ່ກຳລັງປຸງແຕ່ງຢູ່ໃນຂະນະນີ້.</p>
+                </div>
+            </div>
+
+            <!-- ================= VIEW: TABLES ================= -->
+            <div id="view-tables" class="view-section h-full">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-soft mb-6 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-text-main" data-i18n="nav_tables">ໂຕະອາຫານ</h2>
+                        <p class="text-xs text-text-muted mt-0.5">ເລືອກໂຕະເພື່ອເບິ່ງບິນ ຫຼື ສ້າງ QR Code ສຳລັບລູກຄ້າ.</p>
+                    </div>
+                    <div class="flex items-center space-x-4 text-xs font-semibold">
+                        <span class="flex items-center"><span class="w-3 h-3 bg-green-200 border border-green-400 rounded-full inline-block mr-1"></span> ຫວ່າງ</span>
+                        <span class="flex items-center"><span class="w-3 h-3 bg-red-200 border border-red-400 rounded-full inline-block mr-1"></span> ມີລູກຄ້າ</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="tables-grid-container">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- ================= VIEW: BOOKINGS ================= -->
+            <div id="view-bookings" class="view-section">
+                <div class="bg-white p-10 rounded-xl border border-gray-200 text-center shadow-soft">
+                    <i class="fa-regular fa-calendar-check text-4xl text-gray-300 mb-4"></i>
+                    <h2 class="text-xl font-bold mb-2" data-i18n="nav_bookings">ຈອງໂຕະ</h2>
+                    <p class="text-sm text-gray-400">ຍັງບໍ່ມີການຈອງໂຕະໃນວັນນີ້.</p>
+                </div>
+            </div>
+
+            <!-- ================= VIEW: MENU MANAGEMENT ================= -->
+            <div id="view-menu-mgmt" class="view-section">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="relative w-72">
+                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                        <input type="text" id="menu-search-input" oninput="MenuManager.render()" placeholder="ຄົ້ນຫາເມນູ..." data-i18n-placeholder="search_menu" class="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary">
+                    </div>
+                    <button onclick="MenuManager.openAddModal()" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center shadow-sm">
+                        <i class="fa-solid fa-plus mr-2"></i> <span data-i18n="btn_add_new">ເພີ່ມໃໝ່</span>
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 shadow-soft overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50">
+                            <tr class="text-xs text-text-muted border-b border-gray-200">
+                                <th class="p-4 font-semibold w-24 text-center" data-i18n="th_image">ຮູບ</th>
+                                <th class="p-4 font-semibold" data-i18n="th_menu_name">ລາຍການອາຫານ</th>
+                                <th class="p-4 font-semibold" data-i18n="th_category">ໝວດໝູ່</th>
+                                <th class="p-4 font-semibold" data-i18n="th_price">ລາຄາ</th>
+                                <th class="p-4 font-semibold text-center">ການຂາຍ</th>
+                                <th class="p-4 font-semibold text-right" data-i18n="th_action">ຈັດການ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm" id="menu-mgmt-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ================= VIEW: INVENTORY ================= -->
+            <div id="view-inventory" class="view-section">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-text-main" data-i18n="nav_inventory">ສາງວັດຖຸດິບ</h2>
+                        <p class="text-xs text-text-muted mt-0.5">ຈັດການວັດຖຸດິບ ແລະ ຕັດສະຕັອກອັດຕະໂນມັດເມື່ອຂາຍອາຫານ.</p>
+                    </div>
+                    <button onclick="InventoryManager.openAddModal()" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center shadow-sm">
+                        <i class="fa-solid fa-plus mr-2"></i> <span data-i18n="btn_add_new">ເພີ່ມໃໝ່</span>
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 shadow-soft overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50">
+                            <tr class="text-xs text-text-muted border-b border-gray-200">
+                                <th class="p-4 font-semibold" data-i18n="th_material">ວັດຖຸດິບ</th>
+                                <th class="p-4 font-semibold text-center" data-i18n="th_remaining">ຄົງເຫຼືອ</th>
+                                <th class="p-4 font-semibold text-center" data-i18n="th_unit">ຫົວໜ່ວຍ</th>
+                                <th class="p-4 font-semibold text-right" data-i18n="th_action">ຈັດການ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm" id="inventory-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ================= VIEW: SUPPLIERS ================= -->
+            <div id="view-suppliers" class="view-section">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-text-main" data-i18n="nav_suppliers">ຜູ້ສະໜອງ</h2>
+                    <button onclick="SupplierManager.openAddModal()" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center shadow-sm">
+                        <i class="fa-solid fa-plus mr-2"></i> <span data-i18n="btn_add_new">ເພີ່ມໃໝ່</span>
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 shadow-soft overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50">
+                            <tr class="text-xs text-text-muted border-b border-gray-200">
+                                <th class="p-4 font-semibold">ຜູ້ສະໜອງ</th>
+                                <th class="p-4 font-semibold">ເບີໂທ</th>
+                                <th class="p-4 font-semibold">ອີເມວ</th>
+                                <th class="p-4 font-semibold text-right" data-i18n="th_action">ຈັດການ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm" id="suppliers-table-body">
+                            <tr><td colspan="4" class="p-8 text-center text-gray-400" data-i18n="no_suppliers">ຍັງບໍ່ມີຂໍ້ມູນຜູ້ສະໜອງ</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ================= VIEW: PURCHASING ================= -->
+            <div id="view-purchasing" class="view-section">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-text-main" data-i18n="nav_purchasing">ຈັດຊື້</h2>
+                        <p class="text-xs text-text-muted mt-0.5">ຮັບວັດຖຸດິບເຂົ້າສາງ.</p>
+                    </div>
+                    <button onclick="PurchasingManager.openAddModal()" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center shadow-sm">
+                        <i class="fa-solid fa-plus mr-2"></i> <span>ຮັບສິນຄ້າ</span>
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 shadow-soft overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50">
+                            <tr class="text-xs text-text-muted border-b border-gray-200">
+                                <th class="p-4 font-semibold">#</th>
+                                <th class="p-4 font-semibold">ວັດຖຸດິບ</th>
+                                <th class="p-4 font-semibold text-center">ຈຳນວນ</th>
+                                <th class="p-4 font-semibold text-right">ລາຄາລວມ</th>
+                                <th class="p-4 font-semibold text-center">ວັນທີ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm" id="purchasing-table-body">
+                            <tr><td colspan="5" class="p-8 text-center text-gray-400" data-i18n="no_purchasing">ຍັງບໍ່ມີການຈັດຊື້</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ================= VIEW: PARKING ================= -->
+            <div id="view-parking" class="view-section">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-text-main" data-i18n="nav_parking">ຝາກລົດ</h2>
+                        <p class="text-xs text-text-muted mt-0.5">ບັນທຶກ ແລະ ຈັດການລູກຄ້າທີ່ມາຝາກລົດ.</p>
+                    </div>
+                    <button onclick="ParkingManager.openModal()" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center shadow-sm">
+                        <i class="fa-solid fa-plus mr-2"></i> <span>ຮັບລົດເຂົ້າ</span>
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 shadow-soft overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50">
+                            <tr class="text-xs text-text-muted border-b border-gray-200">
+                                <th class="p-4 font-semibold" data-i18n="th_plate">ປ້າຍລົດ</th>
+                                <th class="p-4 font-semibold" data-i18n="th_car_info">ຂໍ້ມູນລົດ</th>
+                                <th class="p-4 font-semibold text-center" data-i18n="th_time_in">ເວລາເຂົ້າ</th>
+                                <th class="p-4 font-semibold text-center">ສະຖານະ</th>
+                                <th class="p-4 font-semibold text-right" data-i18n="th_action">ຈັດການ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm" id="parking-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ================= VIEW: REPORTS ================= -->
+            <div id="view-reports" class="view-section">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-soft mb-6">
+                    <h2 class="text-2xl font-bold text-text-main mb-2" data-i18n="nav_reports">ລາຍງານ</h2>
+                    <p class="text-sm text-gray-500">ຍອດຂາຍ, ເງິນຮັບ, ແລະ ລາຍລະອຽດປະຈຳວັນ.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-soft">
+                        <p class="text-sm text-gray-500 mb-1">ຍອດຂາຍມື້ນີ້</p>
+                        <p class="text-3xl font-bold text-primary">225,000 ₭</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-soft">
+                        <p class="text-sm text-gray-500 mb-1">ຈຳນວນອໍເດີ</p>
+                        <p class="text-3xl font-bold text-text-main">3 ອໍເດີ</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-soft">
+                        <p class="text-sm text-gray-500 mb-1">ລວມມູນຄ່າສະຕັອກ</p>
+                        <p class="text-3xl font-bold text-warning">1,500,000 ₭</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW: STAFF ================= -->
+            <div id="view-staff" class="view-section">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-text-main" data-i18n="nav_staff">ພະນັກງານ</h2>
+                    <button onclick="StaffManager.openModal()" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center shadow-sm">
+                        <i class="fa-solid fa-plus mr-2"></i> <span data-i18n="btn_add_new">ເພີ່ມໃໝ່</span>
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 shadow-soft overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50">
+                            <tr class="text-xs text-text-muted border-b border-gray-200">
+                                <th class="p-4 font-semibold" data-i18n="th_staff">ພະນັກງານ</th>
+                                <th class="p-4 font-semibold" data-i18n="th_email">ອີເມວ</th>
+                                <th class="p-4 font-semibold">ສິດ</th>
+                                <th class="p-4 font-semibold text-right" data-i18n="th_action">ຈັດການ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm" id="staff-table-body">
+                            <tr class="border-b border-gray-100">
+                                <td class="p-4 font-medium">admin</td>
+                                <td class="p-4 text-text-muted">admin@restaurant.la</td>
+                                <td class="p-4"><span class="status-badge status-success">ຜູ້ດູແລ</span></td>
+                                <td class="p-4 text-right"><button class="text-danger"><i class="fa-solid fa-trash-can"></i></button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ================= VIEW: BRANCHES ================= -->
+            <div id="view-branches" class="view-section">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-soft">
+                    <h2 class="text-xl font-bold text-text-main mb-2">Easy Restaurant - Branches</h2>
+                    <p class="text-sm text-gray-500 mb-4">ຈັດການສາຂາພາຍໃຕ້ລະບົບດຽວກັນ.</p>
+                    <div class="p-4 bg-secondary rounded-xl border border-green-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-primary">ສາຂາຫຼັກ (Main Branch)</h4>
+                            <p class="text-xs text-gray-600 mt-0.5">ສະຖານະ: ເປີດໃຊ້ງານ</p>
+                        </div>
+                        <span class="status-badge status-success">ສາຂາປັດຈຸບັນ</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW: SETTINGS ================= -->
+            <div id="view-settings" class="view-section">
+                <div class="bg-white rounded-xl border border-gray-200 shadow-soft p-6 max-w-2xl">
+                    <h3 class="text-lg font-bold text-text-main mb-4" data-i18n="nav_settings">ຕັ້ງຄ່າລະບົບ</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ຊື່ຮ້ານອາຫານ</label>
+                            <input type="text" id="setting-shop-name" value="Easy Restaurant" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-sm">
+                        </div>
+                        <button onclick="saveSettings()" class="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm">
+                            ບັນທຶກການຕັ້ງຄ່າ
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Credit Footer -->
+            <div class="w-full text-center mt-16 mb-4">
+                <p class="text-xs text-text-muted font-medium tracking-wide">ຮ່ວມພັດທະນາໂດຍ : <span class="font-bold text-primary">KKCOMPUTECH</span></p>
+            </div>
+        </div>
+    </main>
+
+    <!-- ================= MODALS & TOAST ================= -->
+    <!-- Table Bill Modal -->
+    <div id="table-bill-modal" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center hidden">
+        <div class="bg-surface rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
+            <button onclick="closeTableBillModal()" class="absolute top-4 right-4 text-gray-400 hover:text-text-main"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="font-bold text-lg text-text-main mb-1" id="modal-table-title">ລາຍລະອຽດໂຕະ</h3>
+            <p class="text-xs text-text-muted mb-4" id="modal-table-time">ນັ່ງມາແລ້ວ: 0 ນาที</p>
+            
+            <div class="border-t border-b border-gray-100 py-3 my-2 max-h-60 overflow-y-auto space-y-2" id="modal-bill-items">
+                <!-- Items list -->
+            </div>
+
+            <div class="flex justify-between items-center my-4 pt-2">
+                <span class="font-bold text-text-main">ຍອດລວມທັງໝົດ:</span>
+                <span class="text-primary font-bold text-xl" id="modal-bill-total">0 ₭</span>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeTableBillModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl font-bold text-sm">ປິດ</button>
+                <button onclick="checkoutTable()" class="flex-1 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-xl font-bold text-sm shadow-sm">ຊຳລະເງິນ & ອະນາໄມໂຕະ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parking Add Modal -->
+    <div id="parking-modal" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center hidden">
+        <div class="bg-surface rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
+            <button onclick="ParkingManager.closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-text-main"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="font-bold text-lg text-text-main mb-4">ຮັບລົດເຂົ້າຝາກ</h3>
+            <form onsubmit="ParkingManager.save(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">ປ້າຍລົດ</label>
+                    <input type="text" id="park-plate" required placeholder="ກກ 1234" class="w-full p-2.5 border rounded-lg text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">ຍີ່ຫໍ້ລົດ</label>
+                    <input type="text" id="park-brand" required placeholder="Toyota Revo" class="w-full p-2.5 border rounded-lg text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">ສີລົດ</label>
+                    <input type="text" id="park-color" required placeholder="ຂາວ" class="w-full p-2.5 border rounded-lg text-sm">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="ParkingManager.closeModal()" class="flex-1 bg-gray-100 py-2.5 rounded-xl font-bold text-sm">ຍົກເລີກ</button>
+                    <button type="submit" class="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold text-sm">ບັນທຶກ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Inventory Add Modal -->
+    <div id="inventory-modal" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center hidden">
+        <div class="bg-surface rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
+            <button onclick="InventoryManager.closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-text-main"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="font-bold text-lg text-text-main mb-4">ເພີ່ມວັດຖຸດິບ</h3>
+            <form onsubmit="InventoryManager.save(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">ຊື່ວັດຖຸດິບ</label>
+                    <input type="text" id="inv-name" required class="w-full p-2.5 border rounded-lg text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">ຈຳນວນເລີ່ມຕົ້ນ</label>
+                    <input type="number" step="0.1" id="inv-qty" required value="0" class="w-full p-2.5 border rounded-lg text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">ຫົວໜ່ວຍ</label>
+                    <input type="text" id="inv-unit" required value="kg" class="w-full p-2.5 border rounded-lg text-sm">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="InventoryManager.closeModal()" class="flex-1 bg-gray-100 py-2.5 rounded-xl font-bold text-sm">ຍົກເລີກ</button>
+                    <button type="submit" class="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold text-sm">ບັນທຶກ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Global Toast Notification -->
+    <div id="global-toast" class="toast">
+        <i class="fa-solid fa-circle-check text-xl"></i>
+        <div>
+            <p class="font-bold text-sm" data-i18n="success">ສຳເລັດ</p>
+            <p class="text-xs opacity-90" id="toast-message">ອໍເດີຖືກບັນທຶກຮຽບຮ້ອຍແລ້ວ</p>
+        </div>
+    </div>
+
+    <script>
+        // --- MULTI-LANGUAGE DICTIONARY (Lao, English, Chinese) ---
+        const translations = {
+            lo: {
+                login_welcome: "ຍິນດີຕ້ອນຮັບ",
+                login_subtitle: "ເຂົ້າສູ່ລະບົບ ເພື່ອຈັດການຮ້ານອາຫານຂອງທ່ານ.",
+                login_username_label: "ຊື່ຜູ້ໃຊ້ ຫຼື ອີເມວ",
+                login_password_label: "ລະຫັດຜ່ານ",
+                login_btn: "ເຂົ້າສູ່ລະບົບ",
+                login_error: "ຊື່ຜູ້ໃຊ້ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ (admin / admin123)",
+                login_banner_title: "ເລີ່ມຕົ້ນມື້ໃໝ່ ທີ່ດີໄປດ້ວຍກັນ.",
+                login_banner_desc: "ຈັດການຮ້ານອາຫານຂອງທ່ານ ໃຫ້ທຸກຢ່າງເປັນເລື່ອງງ່າຍ.",
+                nav_overview: "ພາບລວມ",
+                nav_pos: "ຂາຍອາຫານ (POS)",
+                nav_orders: "ອໍເດີ",
+                nav_kitchen: "ຫ້ອງຄົວ",
+                nav_tables: "ໂຕະອາຫານ",
+                nav_bookings: "ຈອງໂຕະ",
+                nav_menu: "ເມນູອາຫານ",
+                nav_inventory: "ສາງວັດຖຸດິບ",
+                nav_suppliers: "ຜູ້ສະໜອງ",
+                nav_purchasing: "ຈັດຊື້",
+                nav_parking: "ຝາກລົດ",
+                nav_reports: "ລາຍງານ",
+                nav_staff: "ພະນັກງານ",
+                nav_branches: "ສາຂາ ແລະອາຍຸບັນຊີ",
+                nav_settings: "ຕັ້ງຄ່າ",
+                user_role: "ຜູ້ເບິ່ງແຍງ",
+                current_branch: "ສາຂາປັດຈຸບັນ",
+                main_branch: "ສາຂາຫຼັກ (Main Branch)",
+                banner_title: "ເລີ່ມມື້ດີໆ ຢູ່ທີ່ນີ້.",
+                banner_desc: "ບໍລິຫານຮ້ານອາຫານໃຫ້ລຽບລື່ນ ທຸກໆມື້.",
+                btn_new_order: "ສ້າງອໍເດີໃໝ່",
+                today_overview: "ພາບລວມມື້ນີ້",
+                kpi_revenue: "ເງິນຮັບສຸດທິມື້ນີ້",
+                kpi_orders: "ອໍເດີທັງໝົດ",
+                kpi_tables: "ໂຕະທີ່ໃຊ້ງານ",
+                kpi_bookings: "ການຈອງ",
+                recent_orders: "ອໍເດີຫຼ້າສຸດ",
+                view_all: "ເບິ່ງທັງໝົດ",
+                th_order: "ອໍເດີ",
+                th_table: "ໂຕະ",
+                th_status: "ສະຖານະ",
+                th_total: "ລວມ",
+                status_success: "ສຳເລັດ",
+                search_menu: "ຄົ້ນຫາເມນູ...",
+                current_order: "ອໍເດີປັດຈຸບັນ",
+                items: "ລາຍການ",
+                no_items: "ຍັງບໍ່ມີລາຍການ",
+                save_order: "ບັນທຶກອໍເດີ",
+                btn_add_new: "ເພີ່ມໃໝ່",
+                th_image: "ຮູບ",
+                th_menu_name: "ລາຍການອາຫານ",
+                th_category: "ໝວດໝູ່",
+                th_price: "ລາຄາ",
+                th_action: "ຈັດການ",
+                th_material: "ວັດຖຸດິບ",
+                th_remaining: "ຄົງເຫຼືອ",
+                th_unit: "ຫົວໜ່ວຍ",
+                no_suppliers: "ຍັງບໍ່ມີຂໍ້ມູນຜູ້ສະໜອງ",
+                no_purchasing: "ຍັງບໍ່ມີການຈັດຊື້",
+                th_plate: "ປ້າຍລົດ",
+                th_car_info: "ຂໍ້ມູນລົດ",
+                th_time_in: "ເວລາເຂົ້າ",
+                th_staff: "ພະນັກງານ",
+                th_email: "ອີເມວ",
+                success: "ສຳເລັດ"
+            },
+            en: {
+                login_welcome: "Welcome Back",
+                login_subtitle: "Sign in to manage your restaurant.",
+                login_username_label: "Username or Email",
+                login_password_label: "Password",
+                login_btn: "Sign In",
+                login_error: "Invalid username or password (admin / admin123)",
+                login_banner_title: "Start a great new day together.",
+                login_banner_desc: "Manage your restaurant smoothly and effortlessly.",
+                nav_overview: "Overview",
+                nav_pos: "POS",
+                nav_orders: "Orders",
+                nav_kitchen: "Kitchen",
+                nav_tables: "Tables",
+                nav_bookings: "Bookings",
+                nav_menu: "Menu Management",
+                nav_inventory: "Inventory",
+                nav_suppliers: "Suppliers",
+                nav_purchasing: "Purchasing",
+                nav_parking: "Parking",
+                nav_reports: "Reports",
+                nav_staff: "Staff",
+                nav_branches: "Branches & Account",
+                nav_settings: "Settings",
+                user_role: "Administrator",
+                current_branch: "Current Branch",
+                main_branch: "Main Branch",
+                banner_title: "Start a great day here.",
+                banner_desc: "Manage your restaurant smoothly every day.",
+                btn_new_order: "New Order",
+                today_overview: "Today's Overview",
+                kpi_revenue: "Net Revenue Today",
+                kpi_orders: "Total Orders",
+                kpi_tables: "Active Tables",
+                kpi_bookings: "Reservations",
+                recent_orders: "Recent Orders",
+                view_all: "View All",
+                th_order: "Order",
+                th_table: "Table",
+                th_status: "Status",
+                th_total: "Total",
+                status_success: "Completed",
+                search_menu: "Search menu...",
+                current_order: "Current Order",
+                items: "Items",
+                no_items: "No items yet",
+                save_order: "Save Order",
+                btn_add_new: "Add New",
+                th_image: "Image",
+                th_menu_name: "Menu Item",
+                th_category: "Category",
+                th_price: "Price",
+                th_action: "Action",
+                th_material: "Material",
+                th_remaining: "Remaining",
+                th_unit: "Unit",
+                no_suppliers: "No supplier data available",
+                no_purchasing: "No purchasing records",
+                th_plate: "License Plate",
+                th_car_info: "Car Info",
+                th_time_in: "Time In",
+                th_staff: "Staff",
+                th_email: "Email",
+                success: "Success"
+            },
+            zh: {
+                login_welcome: "欢迎登录",
+                login_subtitle: "登录以管理您的餐厅。",
+                login_username_label: "用户名或邮箱",
+                login_password_label: "密码",
+                login_btn: "登录",
+                login_error: "用户名或密码错误 (admin / admin123)",
+                login_banner_title: "开启美好的一天。",
+                login_banner_desc: "让您的餐厅运营轻松高效。",
+                nav_overview: "概览",
+                nav_pos: "收银系统 (POS)",
+                nav_orders: "订单",
+                nav_kitchen: "厨房",
+                nav_tables: "餐桌",
+                nav_bookings: "预订",
+                nav_menu: "菜单管理",
+                nav_inventory: "库存",
+                nav_suppliers: "供应商",
+                nav_purchasing: "采购",
+                nav_parking: "停车场",
+                nav_reports: "报表",
+                nav_staff: "员工",
+                nav_branches: "分店与账户",
+                nav_settings: "设置",
+                user_role: "管理员",
+                current_branch: "当前分店",
+                main_branch: "总店 (Main Branch)",
+                banner_title: "从这里开始美好的一天。",
+                banner_desc: "让您的餐厅每天运营得井井有条。",
+                btn_new_order: "新建订单",
+                today_overview: "今日概览",
+                kpi_revenue: "今日净收入",
+                kpi_orders: "总订单",
+                kpi_tables: "使用中餐桌",
+                kpi_bookings: "预订数",
+                recent_orders: "最近订单",
+                view_all: "查看全部",
+                th_order: "订单",
+                th_table: "餐桌",
+                th_status: "状态",
+                th_total: "总计",
+                status_success: "已完成",
+                search_menu: "搜索菜单...",
+                current_order: "当前订单",
+                items: "项",
+                no_items: "暂无点餐",
+                save_order: "保存订单",
+                btn_add_new: "新增",
+                th_image: "图片",
+                th_menu_name: "菜品名称",
+                th_category: "分类",
+                th_price: "价格",
+                th_action: "操作",
+                th_material: "原料",
+                th_remaining: "剩余库存",
+                th_unit: "单位",
+                no_suppliers: "暂无供应商数据",
+                no_purchasing: "暂无采购记录",
+                th_plate: "车牌号",
+                th_car_info: "车辆信息",
+                th_time_in: "入场时间",
+                th_staff: "员工",
+                th_email: "电子邮箱",
+                success: "成功"
+            }
+        };
+
+        const LangManager = {
+            currentLang: 'lo',
+            changeLang(lang) {
+                this.currentLang = lang;
+                document.documentElement.lang = lang;
+                const dict = translations[lang] || translations.lo;
+                
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (dict[key]) el.textContent = dict[key];
+                });
+
+                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    if (dict[key]) el.placeholder = dict[key];
+                });
+                
+                const langSel = document.getElementById('lang-selector');
+                if(langSel) langSel.value = lang;
+            }
+        };
+
+        // --- AUTH LOGIC ---
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('login-user').value.trim();
+            const p = document.getElementById('login-pass').value.trim();
+            const err = document.getElementById('login-error');
+
+            if(u === 'admin' && p === 'admin123') {
+                err.classList.add('hidden');
+                document.getElementById('login-overlay').classList.add('hidden');
+                document.getElementById('main-sidebar').classList.remove('hidden');
+                document.getElementById('main-content-area').classList.remove('hidden');
+                showToast('ເຂົ້າສູ່ລະບົບສຳເລັດແລ້ວ!');
+            } else {
+                err.classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('login-overlay').classList.remove('hidden');
+            document.getElementById('main-sidebar').classList.add('hidden');
+            document.getElementById('main-content-area').classList.add('hidden');
+            document.getElementById('login-pass').value = '';
+        }
+
+        function togglePassword() {
+            const passInput = document.getElementById('login-pass');
+            const icon = document.getElementById('toggle-pass-icon');
+            if(passInput.type === 'password') {
+                passInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // --- DATA CATALOGS ---
+        const menuItems = [
+            { id: 1, name: 'ລາບໄກ່', price: 65000, category: 'ອາຫານລາວ', image: 'https://images.unsplash.com/photo-1548943487-a2e4b43b4859?w=300&h=300&fit=crop' },
+            { id: 2, name: 'ເອາະຫຼາມຫຼວງພະບາງ', price: 85000, category: 'ອາຫານລາວ', image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=300&h=300&fit=crop' },
+            { id: 3, name: 'ປີ້ງໄກ່ຫົວສີໄຄ', price: 75000, category: 'ປີ້ງ ແລະ ຍ້າງ', image: 'https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?w=300&h=300&fit=crop' },
+            { id: 4, name: 'ປີ້ງປາແມ່ນ້ຳຂອງ', price: 120000, category: 'ປີ້ງ ແລະ ຍ້າງ', image: 'https://images.unsplash.com/photo-1580476262798-bddd9f4b7369?w=300&h=300&fit=crop' },
+            { id: 5, name: 'ເຂົ້າຜັດພິເສດ', price: 55000, category: 'ເຂົ້າ ແລະ ເສັ້ນ', image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=300&h=300&fit=crop' },
+            { id: 6, name: 'ເຝີຊີ້ນງົວ', price: 45000, category: 'ເຂົ້າ ແລະ ເສັ້ນ', image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=300&h=300&fit=crop' },
+            { id: 7, name: 'ຕຳໝາກຫຸ່ງ', price: 40000, category: 'ຜັກ ແລະ ສະຫຼັດ', image: 'https://images.unsplash.com/photo-1553163147-622ab57be1c2?w=300&h=300&fit=crop' },
+            { id: 8, name: 'ນ້ຳປັ່ນໝາກມ່ວງ', price: 25000, category: 'ຂອງຫວານ', image: 'https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=300&h=300&fit=crop' },
+            { id: 9, name: 'ເບຍລາວ ໃຫຍ່', price: 20000, category: 'ເຄື່ອງດື່ມ', image: 'https://images.unsplash.com/photo-1657204445831-f1ebfb809467?w=300&h=300&fit=crop' }
+        ];
+
+        let activeCategory = 'all';
+
+        const CartManager = {
+            items: [],
+            setCategory(cat) {
+                activeCategory = cat;
+                document.querySelectorAll('.menu-filter-btn').forEach(b => b.classList.remove('active'));
+                event.target.classList.add('active');
+                this.renderMenuCatalog();
+            },
+            filterMenu() {
+                this.renderMenuCatalog();
+            },
+            renderMenuCatalog() {
+                const container = document.getElementById('menu-grid-container');
+                if(!container) return;
+                const searchTxt = document.getElementById('pos-search-input').value.toLowerCase();
+                
+                const filtered = menuItems.filter(i => {
+                    const matchCat = activeCategory === 'all' || i.category === activeCategory;
+                    const matchSearch = i.name.toLowerCase().includes(searchTxt);
+                    return matchCat && matchSearch;
+                });
+
+                container.innerHTML = '';
+                filtered.forEach(item => {
+                    container.innerHTML += `
+                        <div class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all relative group flex flex-col h-full">
+                            <div class="h-32 bg-secondary flex items-center justify-center p-4 relative overflow-hidden">
+                                <img src="${item.image}" class="object-cover h-24 w-24 rounded-full shadow-md">
+                                <button onclick="CartManager.add(${item.id})" class="absolute bottom-3 right-3 bg-white text-primary rounded-full w-9 h-9 flex items-center justify-center shadow-lg hover:bg-primary hover:text-white transition-colors">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="p-3 flex-1 flex flex-col justify-between">
+                                <h4 class="font-bold text-text-main text-sm truncate">${item.name}</h4>
+                                <p class="font-bold text-primary text-sm">${item.price.toLocaleString()} ₭</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            },
+            add(id) {
+                const p = menuItems.find(x => x.id === id);
+                const ex = this.items.find(x => x.id === id);
+                if(ex) ex.qty++; else this.items.push({...p, qty:1});
+                this.updateUI();
+            },
+            updateUI() {
+                const list = document.getElementById('cart-list');
+                const empty = document.getElementById('cart-empty-state');
+                const count = document.getElementById('cart-count');
+                const total = document.getElementById('cart-total');
+                const btn = document.getElementById('btn-submit-order');
+                
+                let tQty = 0, tPrice = 0;
+                list.innerHTML = '';
+                if(this.items.length === 0) {
+                    empty.classList.remove('hidden');
+                    list.classList.add('hidden');
+                    btn.disabled = true;
+                } else {
+                    empty.classList.add('hidden');
+                    list.classList.remove('hidden');
+                    btn.disabled = false;
+                    this.items.forEach(i => {
+                        tQty += i.qty;
+                        tPrice += i.price * i.qty;
+                        list.innerHTML += `<li class="flex justify-between items-center bg-white p-2 border-b text-sm"><span>${i.name} (ອັນ x${i.qty})</span><b>${(i.price*i.qty).toLocaleString()} ₭</b></li>`;
+                    });
+                }
+                count.textContent = tQty;
+                total.textContent = tPrice.toLocaleString();
+            }
+        };
+
+        // --- ROUTER ---
+        class AppRouter {
+            constructor() {
+                this.views = document.querySelectorAll('.view-section');
+                this.links = document.querySelectorAll('.sidebar-link');
+                this.pageTitle = document.getElementById('page-title');
+                
+                window.addEventListener('hashchange', () => this.navigate());
+                if(!window.location.hash) window.location.hash = '#overview';
+                this.navigate();
+            }
+
+            navigate() {
+                const hash = window.location.hash || '#overview';
+                const targetViewId = 'view-' + hash.substring(1);
+                
+                this.views.forEach(v => v.classList.remove('active'));
+                this.links.forEach(l => l.classList.remove('active'));
+
+                const targetView = document.getElementById(targetViewId);
+                if (targetView) targetView.classList.add('active');
+
+                const activeLink = document.querySelector(`.sidebar-link[href="${hash}"]`);
+                if (activeLink) {
+                    activeLink.classList.add('active');
+                    this.pageTitle.textContent = activeLink.querySelector('span').textContent;
+                }
+                document.getElementById('app-viewport').scrollTop = 0;
+            }
+        }
+
+        // --- MANAGERS ---
+        const MenuManager = {
+            render() {
+                const body = document.getElementById('menu-mgmt-table-body');
+                if(!body) return;
+                const search = document.getElementById('menu-search-input').value.toLowerCase();
+                const filtered = menuItems.filter(i => i.name.toLowerCase().includes(search));
+                
+                body.innerHTML = '';
+                filtered.forEach(i => {
+                    body.innerHTML += `
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="p-3 text-center"><img src="${i.image}" class="w-10 h-10 rounded-full mx-auto object-cover"></td>
+                            <td class="p-4 font-medium">${i.name}</td>
+                            <td class="p-4 text-text-muted">${i.category}</td>
+                            <td class="p-4 font-medium">${i.price.toLocaleString()} ₭</td>
+                            <td class="p-4 text-center"><span class="status-badge status-success">ເປີດຂາຍ</span></td>
+                            <td class="p-4 text-right"><button class="text-danger"><i class="fa-solid fa-trash-can"></i></button></td>
+                        </tr>`;
+                });
+            },
+            openAddModal() { showToast('ເປີດຟອມເພີ່ມເມນູອາຫານ'); }
+        };
+
+        const InventoryManager = {
+            items: [
+                { id: 1, name: 'ຊີ້ນໄກ່', qty: 15.5, unit: 'kg' },
+                { id: 2, name: 'ເມັດກາເ phê', qty: 5.0, unit: 'kg' },
+                { id: 3, name: 'ຜັກຫອມ', qty: 2.3, unit: 'kg' },
+                { id: 4, name: 'ເຂົ້າເຈົ້າ', qty: 50.0, unit: 'kg' }
+            ],
+            render() {
+                const body = document.getElementById('inventory-table-body');
+                if(!body) return;
+                body.innerHTML = '';
+                this.items.forEach(i => {
+                    body.innerHTML += `
+                        <tr class="border-b border-gray-100">
+                            <td class="p-4 font-bold text-text-main">${i.name}</td>
+                            <td class="p-4 text-center font-bold text-primary">${i.qty}</td>
+                            <td class="p-4 text-center text-gray-500">${i.unit}</td>
+                            <td class="p-4 text-right"><button onclick="InventoryManager.del(${i.id})" class="text-danger"><i class="fa-solid fa-trash-can"></i></button></td>
+                        </tr>`;
+                });
+            },
+            openAddModal() { document.getElementById('inventory-modal').classList.remove('hidden'); },
+            closeModal() { document.getElementById('inventory-modal').classList.add('hidden'); },
+            save(e) {
+                e.preventDefault();
+                const name = document.getElementById('inv-name').value;
+                const qty = parseFloat(document.getElementById('inv-qty').value);
+                const unit = document.getElementById('inv-unit').value;
+                this.items.push({ id: Date.now(), name, qty, unit });
+                this.render();
+                this.closeModal();
+                showToast('ເພີ່ມວັດຖຸດິບສຳເລັດແລ້ວ!');
+            },
+            del(id) {
+                this.items = this.items.filter(x => x.id !== id);
+                this.render();
+            }
+        };
+
+        const SupplierManager = {
+            openAddModal() { showToast('ເປີດຟອມເພີ່ມຜູ້ສະໜອງ'); }
+        };
+
+        const PurchasingManager = {
+            openAddModal() { showToast('ເປີດຟອມຮັບສິນຄ້າເຂົ້າສາງ'); }
+        };
+
+        const ParkingManager = {
+            cars: [
+                { id: 1, plate: 'ກກ 1122', brand: 'Toyota', color: 'ຂາວ', timeIn: '09:30', status: 'ຈອດຢູ່' }
+            ],
+            render() {
+                const body = document.getElementById('parking-table-body');
+                if(!body) return;
+                body.innerHTML = '';
+                this.cars.forEach(c => {
+                    body.innerHTML += `
+                        <tr class="border-b border-gray-100">
+                            <td class="p-4 font-bold text-text-main">${c.plate}</td>
+                            <td class="p-4">${c.brand} (${c.color})</td>
+                            <td class="p-4 text-center">${c.timeIn}</td>
+                            <td class="p-4 text-center"><span class="status-badge status-success">${c.status}</span></td>
+                            <td class="p-4 text-right"><button onclick="ParkingManager.checkout(${c.id})" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg font-bold text-gray-700">ເອົາລົດອອກ</button></td>
+                        </tr>`;
+                });
+            },
+            openModal() { document.getElementById('parking-modal').classList.remove('hidden'); },
+            closeModal() { document.getElementById('parking-modal').classList.add('hidden'); },
+            save(e) {
+                e.preventDefault();
+                const plate = document.getElementById('park-plate').value;
+                const brand = document.getElementById('park-brand').value;
+                const color = document.getElementById('park-color').value;
+                const timeIn = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                this.cars.push({ id: Date.now(), plate, brand, color, timeIn, status: 'ຈອດຢູ່' });
+                this.render();
+                this.closeModal();
+                showToast('ບັນທຶກຮັບລົດສຳເລັດແລ້ວ!');
+            },
+            checkout(id) {
+                this.cars = this.cars.filter(x => x.id !== id);
+                this.render();
+                showToast('ເອົາລົດອອກຮຽບຮ້ອຍແລ້ວ!');
+            }
+        };
+
+        const StaffManager = {
+            openModal() { showToast('ເປີດຟອມເພີ່ມພະນັກງານ'); }
+        };
+
+        // --- TABLES MANAGEMENT ---
+        let selectedTableId = null;
+        const activeTablesData = {
+            'T01': { occupied: true, time: '45 ນາທີ', items: [{name:'ລາບໄກ່', qty:2, price:65000}, {name:'ເບຍລາວ ໃຫຍ່', qty:3, price:20000}], total: 190000 },
+            'T02': { occupied: false, time: '', items: [], total: 0 },
+            'T03': { occupied: false, time: '', items: [], total: 0 },
+            'T04': { occupied: false, time: '', items: [], total: 0 },
+            'T05': { occupied: false, time: '', items: [], total: 0 },
+            'T06': { occupied: false, time: '', items: [], total: 0 }
+        };
+
+        function renderTablesGrid() {
+            const container = document.getElementById('tables-grid-container');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            Object.keys(activeTablesData).forEach(tId => {
+                const t = activeTablesData[tId];
+                const bg = t.occupied ? 'bg-red-50 border-red-200 hover:bg-red-100' : 'bg-secondary border-green-100 hover:bg-green-100';
+                const iconColor = t.occupied ? 'text-danger' : 'text-primary';
+                
+                container.innerHTML += `
+                    <div onclick="openTableBill('${tId}')" class="${bg} rounded-xl p-5 flex flex-col items-center justify-center border shadow-soft cursor-pointer transition-all">
+                        <i class="fa-solid fa-chair ${iconColor} text-3xl mb-2"></i>
+                        <h4 class="font-bold text-text-main text-base">${tId}</h4>
+                        <p class="text-xs font-semibold ${t.occupied ? 'text-danger' : 'text-primary'} mt-1">${t.occupied ? 'ມີລູກຄ້າ ('+t.time+')' : 'ຫວ່າງ'}</p>
+                        ${t.occupied ? '<p class="text-xs font-bold text-text-main mt-2">'+t.total.toLocaleString()+' ₭</p>' : ''}
+                    </div>
+                `;
+            });
+        }
+
+        function openTableBill(tId) {
+            selectedTableId = tId;
+            const t = activeTablesData[tId];
+            if(!t.occupied) {
+                showToast(`ໂຕະ ${tId} ຍັງວ່າງຢູ່`);
+                return;
+            }
+            document.getElementById('modal-table-title').textContent = `ໂຕະອາຫານ: ${tId}`;
+            document.getElementById('modal-table-time').textContent = `ນັ່ງມາແລ້ວ: ${t.time}`;
+            document.getElementById('modal-bill-total').textContent = `${t.total.toLocaleString()} ₭`;
+            
+            const list = document.getElementById('modal-bill-items');
+            list.innerHTML = '';
+            t.items.forEach(i => {
+                list.innerHTML += `<div class="flex justify-between text-sm"><span>${i.name} (x${i.qty})</span><b>${(i.price*i.qty).toLocaleString()} ₭</b></div>`;
+            });
+
+            document.getElementById('table-bill-modal').classList.remove('hidden');
+        }
+
+        function closeTableBillModal() {
+            document.getElementById('table-bill-modal').classList.add('hidden');
+        }
+
+        function checkoutTable() {
+            if(selectedTableId && activeTablesData[selectedTableId]) {
+                activeTablesData[selectedTableId].occupied = false;
+                activeTablesData[selectedTableId].items = [];
+                activeTablesData[selectedTableId].total = 0;
+            }
+            closeTableBillModal();
+            renderTablesGrid();
+            showToast('ຊຳລະເງິນ ແລະ ອະນາໄມໂຕະຮຽບຮ້ອຍແລ້ວ!');
+        }
+
+        function submitOrder() {
+            if(CartManager.items.length === 0) return;
+            const table = document.getElementById('order-table').value;
+            const total = CartManager.items.reduce((sum, i) => sum + (i.price * i.qty), 0);
+            
+            activeTablesData[table].occupied = true;
+            activeTablesData[table].time = 'ສັ່ງເມື່ອຄູ່ນີ້';
+            activeTablesData[table].items = [...CartManager.items];
+            activeTablesData[table].total = total;
+
+            CartManager.items = [];
+            CartManager.updateUI();
+            renderTablesGrid();
+            showToast('ບັນທຶກອໍເດີສຳເລັດແລ້ວ!');
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('global-toast');
+            document.getElementById('toast-message').textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function saveSettings() {
+            const newName = document.getElementById('setting-shop-name').value;
+            document.querySelectorAll('.brand-name').forEach(el => el.textContent = newName);
+            showToast('ບັນທຶກການຕັ້ງຄ່າຮຽບຮ້ອຍແລ້ວ!');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new AppRouter();
+            CartManager.renderMenuCatalog();
+            MenuManager.render();
+            InventoryManager.render();
+            ParkingManager.render();
+            renderTablesGrid();
+        });
+    </script>
+</body>
+</html>
